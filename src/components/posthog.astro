@@ -7,4 +7,8 @@
     api_host:'https://us.i.posthog.com',
     defaults: '2025-05-24'
   })
+  posthog.onFeatureFlags(() => {
+    const variant = posthog.getFeatureFlag('homepage_button_color')
+    document.documentElement.setAttribute('data-variant', variant)
+  })
 </script>
