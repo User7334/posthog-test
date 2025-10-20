@@ -1,0 +1,51 @@
+---
+import Welcome from '../components/Welcome.astro';
+import Layout from '../layouts/Layout.astro';
+
+import PostHogNode from '../posthog-node.js';
+
+const projectAPIKey = 'phc_LWkJmAO7mxFzH6dXQxgZHsK7wJ7qn1RD6AAwvr7Okgm';
+const cookie = Astro.cookies.get(`ph_${projectAPIKey}_posthog`);
+let buttonText = 'Loading...';
+
+if (cookie && cookie.json().distinct_id) {
+  try {
+    const distinctId = cookie.json().distinct_id;
+    const variant = await PostHogNode().getFeatureFlag('my-cool-experiment', distinctId);
+    if (variant === 'blue') {
+      buttonText = 'Blue Variant';
+    } else if (variant === 'red') {
+      buttonText = 'Red Variant';
+    } else {
+      buttonText = 'Default';
+    }
+  } catch (e) {
+    buttonText = 'Error';
+  }
+}
+
+declare global {
+  interface Window {
+    posthog: any;
+  }
+}
+---
+
+<Layout>
+	<Welcome />
+      <button
+        class="main-button px-6 py-3 border-4 rounded-lg text-xl text-white transition-colors
+        data-[variant=blue]:bg-blue-500
+        data-[variant=red]:bg-red-500"
+        data-variant={buttonText.includes('Control') ? 'control' : buttonText.includes('Test') ? 'test' : 'default'}
+      >
+        {buttonText}
+      </button>
+
+      <script>
+        const button = document.querySelector('.main-button');
+        button?.addEventListener('click', () => {
+          window.posthog.capture('home_button_clicked');
+        });
+      </script>
+</Layout>
