@@ -1,21 +1,9 @@
 ---
-// PostHogLoader.astro
 const apiKey = "phc_LWkJmAO7mxFzH6dXQxgZHsK7wJ7qn1RD6AAwvr7Okgm"
 const apiHost = "https://us.i.posthog.com"
 ---
 
 <script type="module">
-  import posthog from "posthog-js";
-
-  if (typeof window !== "undefined" && !window.posthog) {
-    posthog.init("{apiKey}", {
-      api_host: "{apiHost}",
-      capture_pageview: true,
-      autocapture: true,
-      persistence: "localStorage",
-      disable_session_recording: true,
-      loaded: () => console.log("[PostHog] ready")
-    });
-    window.posthog = posthog;
-  }
+  import { initPostHog } from "../scripts/posthog-loader.js";
+  initPostHog("{apiKey}", "{apiHost}");
 </script>

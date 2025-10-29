@@ -1,6 +1,7 @@
 ---
+// src/components/ABTest.astro
 interface Props {
-  id: string;
+  id: string; // Feature Flag Key in PostHog
 }
 
 const { id } = Astro.props;
@@ -21,35 +22,38 @@ const slotB = await Astro.slots.render('B');
 </div>
 
 <script type="module">
-  // kleine Helper: warte, bis window.posthog existiert (falls Loader minimal später lädt)
   function waitForPosthog(timeout = 4000) {
     return new Promise((resolve, reject) => {
       const start = Date.now();
       (function check() {
         if (window.posthog) return resolve(window.posthog);
-        if (Date.now() - start > timeout) return reject(new Error("PostHog timeout"));
+        if (Date.now() - start > timeout) return reject(new Error("PostHog not found"));
         requestAnimationFrame(check);
       })();
     });
   }
 
   (async () => {
-    // robustes Targeting: an nächstes .abtest-Element anhängen
-    const root = document.currentScript?.closest('.abtest') || document.querySelector('.abtest');
+    const root = document.currentScript?.closest('.abtest');
     if (!root) return;
 
     const flagKey = root.dataset.abTestId;
 
     let ph;
-    try { ph = await waitForPosthog(); } catch { return; }
+    try { ph = await waitForPosthog(); } catch (err) {
+      console.warn("ABTest: PostHog not ready", err);
+      return;
+    }
 
-    // Stelle sicher, dass Flags geladen sind, dann Variante bestimmen
+    // Lade Feature-Flags und bestimme Variante
     ph.onFeatureFlags(async () => {
       let variant = 'A';
       try {
-        const res = await ph.getFeatureFlag(flagKey);
-        if (res === 'B') variant = 'B';
-      } catch {}
+        const result = await ph.getFeatureFlag(flagKey);
+        if (result === 'B') variant = 'B';
+      } catch (err) {
+        console.warn("ABTest: Error fetching flag", err);
+      }
 
       const a = root.querySelector('[data-variant="A"]');
       const b = root.querySelector('[data-variant="B"]');
@@ -62,7 +66,7 @@ const slotB = await Astro.slots.render('B');
         id: flagKey,
         variant,
         page: window.location.pathname,
-        ts: Date.now(),
+        timestamp: new Date().toISOString(),
       });
     });
   })();
