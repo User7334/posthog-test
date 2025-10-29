@@ -6,9 +6,7 @@ import vercel from '@astrojs/vercel';
 
 export default defineConfig({
   output: 'server',
-  adapter: vercel({
-    includeFiles: ["node_modules/posthog-node/**/*"], // <— wichtig
-  }),
+  adapter: vercel(),
   vite: {
     plugins: [tailwindcss()]
   }

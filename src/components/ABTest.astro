@@ -1,0 +1,75 @@
+---
+interface Props {
+  id: string;
+  key: string;
+  host: string;
+  weightA?: number;
+}
+
+const { id, key, host, weightA = 0.5 } = Astro.props;
+
+const hasA = Astro.slots.has('A');
+const hasB = Astro.slots.has('B');
+if (!hasA || !hasB) {
+  throw new Error(`[ABTest:${id}] Both slots "A" and "B" must be defined.`);
+}
+
+const slotA = await Astro.slots.render('A');
+const slotB = await Astro.slots.render('B');
+---
+
+<div
+  id={"abtest-" + id}
+  data-ab-test-id={id}
+  data-ab-test-key={key}
+  data-ab-test-host={host}
+  data-ab-test-weight-a={String(weightA)}
+>
+  <div data-variant="A" set:html={slotA}></div>
+  <div data-variant="B" hidden set:html={slotB}></div>
+</div>
+
+<script is:inline>
+  (async () => { 
+    const abtest = document.currentScript.previousElementSibling;
+    if (!abtest) return;
+
+    const { initPostHog, getPostHog } = await import('../scripts/posthog.js');
+    await initPostHog(abtest.dataset.abTestKey, abtest.dataset.abTestHost);
+
+    const posthog = getPostHog();
+
+    if (!posthog){
+      console.log("PostHog not initialized for AB Test:", abtest.dataset.abTestId);
+      return;
+    };
+
+    const flagKey = abtest.dataset.abTestId;
+
+    let variant = await posthog.getFeatureFlag(flagKey);
+    if (variant !== 'A' && variant !== 'B') {
+      variant = "A";
+      console.log("FALLBACK to variant A for AB Test:", flagKey);
+    }
+
+    const a = abtest.querySelector('[data-variant="A"]');;
+    const b = abtest.querySelector('[data-variant="B"]');
+
+    if (variant === 'A') {
+      a.hidden = false;
+      b.hidden = true;
+    } else {
+      a.hidden = true;
+      b.hidden = false;
+    }
+
+    abtest.dataset.variant = variant;
+
+    posthog.capture('ab_test_variant_assigned', {
+      id: flagKey,
+      variant,
+      page: window.location.pathname,
+      timestamp: new Date().toISOString(),
+    });
+  })
+</script>

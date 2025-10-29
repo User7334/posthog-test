@@ -1,6 +1,7 @@
 ---
 import astroLogo from '../assets/astro.svg';
 import background from '../assets/background.svg';
+import ABTest from './ABTest.astro';
 import '../styles/global.css';
 ---
 
@@ -11,12 +12,24 @@ import '../styles/global.css';
 			<a href="https://astro.build"
 				><img src={astroLogo.src} width="115" height="48" alt="Astro Homepage" /></a
 			>
-			<h1>
-				Wello World!
-			</h1>
+      <ABTest
+        id="index-heading"
+        key="phc_LWkJmAO7mxFzH6dXQxgZHsK7wJ7qn1RD6AAwvr7Okgm"
+        host="https://us.i.posthog.com"
+      >
+        <div slot="A">
+          <h1>
+            Variant A
+          </h1>
+        </div>
+        <div slot="B">
+          <h1>
+            Variant B
+          </h1>
+        </div>
+      </ABTest>
 			<section id="links">
 				<a class="button" href="https://docs.astro.build">Read our docs</a>
-        <a class="button border-4 data-[variant=blue]:border-blue-500 data-[variant=red]:border-red-500">AB Test</a>
 				<a href="https://astro.build/chat"
 					>Join our Discord <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36"
 						><path
