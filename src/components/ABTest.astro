@@ -1,10 +1,9 @@
 ---
 interface Props {
   id: string;
-  weightA?: number;
 }
 
-const { id, weightA = 0.5 } = Astro.props;
+const { id } = Astro.props;
 
 const hasA = Astro.slots.has('A');
 const hasB = Astro.slots.has('B');
@@ -16,102 +15,55 @@ const slotA = await Astro.slots.render('A');
 const slotB = await Astro.slots.render('B');
 ---
 
-<div
-  id={"abtest-" + id}
-  data-ab-test-id={id}
-  data-ab-test-weight-a={String(weightA)}
->
+<div class="abtest" data-ab-test-id={id}>
   <div data-variant="A" set:html={slotA}></div>
   <div data-variant="B" hidden set:html={slotB}></div>
 </div>
 
-<script is:inline>
-
-  (async () => { 
-    const abtest = document.currentScript?.previousElementSibling;
-    if (!abtest) {
-      console.error("ABTest component not found in DOM.");
-      return;
-    };
-
-    // Wait for posthog to be available on window. Layout should initialize it once
-    // and (optionally) dispatch a `posthog:ready` event. We wait up to 5s.
-    function waitForPosthog(timeout = 5000) {
-      return new Promise((resolve) => {
+<script type="module">
+  // kleine Helper: warte, bis window.posthog existiert (falls Loader minimal später lädt)
+  function waitForPosthog(timeout = 4000) {
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
+      (function check() {
         if (window.posthog) return resolve(window.posthog);
-        let settled = false;
-        const onReady = () => {
-          if (settled) return;
-          settled = true;
-          window.removeEventListener('posthog:ready', onReady);
-          resolve(window.posthog);
-        };
-        window.addEventListener('posthog:ready', onReady);
-        const poll = setInterval(() => {
-          if (window.posthog) {
-            clearInterval(poll);
-            if (!settled) {
-              settled = true;
-              window.removeEventListener('posthog:ready', onReady);
-              resolve(window.posthog);
-            }
-          }
-        }, 100);
-        setTimeout(() => {
-          clearInterval(poll);
-          window.removeEventListener('posthog:ready', onReady);
-          resolve(window.posthog);
-        }, timeout);
-      });
-    }
+        if (Date.now() - start > timeout) return reject(new Error("PostHog timeout"));
+        requestAnimationFrame(check);
+      })();
+    });
+  }
 
-    const posthog = await waitForPosthog();
+  (async () => {
+    // robustes Targeting: an nächstes .abtest-Element anhängen
+    const root = document.currentScript?.closest('.abtest') || document.querySelector('.abtest');
+    if (!root) return;
 
-    if (!posthog){
-      console.error("PostHog not initialized for AB Test:", abtest.dataset.abTestId);
-      // proceed with fallback (variant A)
-    }
+    const flagKey = root.dataset.abTestId;
 
-    const flagKey = abtest.dataset.abTestId;
+    let ph;
+    try { ph = await waitForPosthog(); } catch { return; }
 
-    // Try to get feature flag from PostHog. If the SDK method isn't available
-    // or an error occurs, fallback to variant A and log a warning.
-    let variant = 'A';
-    try {
-      if (posthog && typeof posthog.getFeatureFlag === 'function') {
-        const result = await posthog.getFeatureFlag(flagKey);
-        if (result === 'A' || result === 'B') {
-          variant = result;
-        } else {
-          console.warn('Unexpected feature flag value, falling back to A:', result);
-        }
-      } else {
-        console.warn('posthog.getFeatureFlag not available; falling back to variant A');
+    // Stelle sicher, dass Flags geladen sind, dann Variante bestimmen
+    ph.onFeatureFlags(async () => {
+      let variant = 'A';
+      try {
+        const res = await ph.getFeatureFlag(flagKey);
+        if (res === 'B') variant = 'B';
+      } catch {}
+
+      const a = root.querySelector('[data-variant="A"]');
+      const b = root.querySelector('[data-variant="B"]');
+      if (a && b) {
+        a.hidden = variant !== 'A';
+        b.hidden = variant !== 'B';
       }
-    } catch (err) {
-      console.error('Error fetching feature flag, falling back to A', err);
-    }
 
-    const a = abtest.querySelector('[data-variant="A"]');;
-    const b = abtest.querySelector('[data-variant="B"]');
-
-    if (variant === 'A') {
-      a.hidden = false;
-      b.hidden = true;
-    } else {
-      a.hidden = true;
-      b.hidden = false;
-    }
-
-    abtest.dataset.variant = variant;
-
-    if (posthog && typeof posthog.capture === 'function') {
-      posthog.capture('ab_test_variant_assigned', {
+      ph.capture('ab_test_variant_assigned', {
         id: flagKey,
         variant,
         page: window.location.pathname,
-        timestamp: new Date().toISOString(),
+        ts: Date.now(),
       });
-    }
+    });
   })();
 </script>
