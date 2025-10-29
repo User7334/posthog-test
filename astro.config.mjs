@@ -2,9 +2,13 @@
 import { defineConfig } from 'astro/config';
 
 import tailwindcss from '@tailwindcss/vite';
+import vercel from '@astrojs/vercel';
 
 export default defineConfig({
-  output: 'static',
+  // Use server output so the Vercel adapter produces a `.vercel/output` Build Output API
+  // (needed when deploying server-rendered or edge functions with the Vercel adapter)
+  output: 'server',
+  adapter: vercel(),
   vite: {
     plugins: [tailwindcss()]
   }
