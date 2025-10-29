@@ -1,12 +1,24 @@
+// src/scripts/posthog.js
 import posthog from "posthog-js";
 
 let initialized = false;
 
 export function initPostHog(publicApiKey, host) {
-  if (typeof window === "undefined" || initialized) return;
+  // Wenn kein Browser (SSR) → abbrechen
+  if (typeof window === "undefined") return null;
 
-  posthog.init(publicApiKey, {
-    api_host: host,
+  // Wenn schon initialisiert → return vorhandene Instanz
+  if (initialized && window.posthog) return window.posthog;
+
+  // Wenn PostHog bereits auf window gesetzt wurde → übernehmen
+  if (window.posthog) {
+    initialized = true;
+    return window.posthog;
+  }
+
+  // Jetzt initialisieren
+  posthog.init("phc_LWkJmAO7mxFzH6dXQxgZHsK7wJ7qn1RD6AAwvr7Okgm", {
+    api_host: "https://us.i.posthog.com",
     capture_pageview: true,
     autocapture: true,
     persistence: 'localStorage',
@@ -15,9 +27,17 @@ export function initPostHog(publicApiKey, host) {
 
   window.posthog = posthog;
   initialized = true;
-  console.log("PostHog initialized");
+  console.info("[PostHog] initialized:", host);
+
+  return posthog;
 }
 
 export function getPostHog() {
-  return typeof window !== "undefined" ? window.posthog : null;
+  if (typeof window === "undefined") return null;
+  return window.posthog || null;
+}
+
+// 🔹 Hier kommt der globale Loader hinzu
+if (typeof window !== "undefined") {
+  window.initPostHog = initPostHog;
 }

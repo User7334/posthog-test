@@ -1,12 +1,10 @@
 ---
 interface Props {
   id: string;
-  key: string;
-  host: string;
   weightA?: number;
 }
 
-const { id, key, host, weightA = 0.5 } = Astro.props;
+const { id, weightA = 0.5 } = Astro.props;
 
 const hasA = Astro.slots.has('A');
 const hasB = Astro.slots.has('B');
@@ -21,8 +19,6 @@ const slotB = await Astro.slots.render('B');
 <div
   id={"abtest-" + id}
   data-ab-test-id={id}
-  data-ab-test-key={key}
-  data-ab-test-host={host}
   data-ab-test-weight-a={String(weightA)}
 >
   <div data-variant="A" set:html={slotA}></div>
@@ -30,22 +26,51 @@ const slotB = await Astro.slots.render('B');
 </div>
 
 <script is:inline>
+
   (async () => { 
-    const abtest = document.currentScript.previousElementSibling;
+    const abtest = document.currentScript?.previousElementSibling;
     if (!abtest) {
       console.error("ABTest component not found in DOM.");
       return;
     };
 
-    const { initPostHog, getPostHog } = await import('../scripts/posthog.js');
-    await initPostHog(abtest.dataset.abTestKey, abtest.dataset.abTestHost);
+    // Wait for posthog to be available on window. Layout should initialize it once
+    // and (optionally) dispatch a `posthog:ready` event. We wait up to 5s.
+    function waitForPosthog(timeout = 5000) {
+      return new Promise((resolve) => {
+        if (window.posthog) return resolve(window.posthog);
+        let settled = false;
+        const onReady = () => {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener('posthog:ready', onReady);
+          resolve(window.posthog);
+        };
+        window.addEventListener('posthog:ready', onReady);
+        const poll = setInterval(() => {
+          if (window.posthog) {
+            clearInterval(poll);
+            if (!settled) {
+              settled = true;
+              window.removeEventListener('posthog:ready', onReady);
+              resolve(window.posthog);
+            }
+          }
+        }, 100);
+        setTimeout(() => {
+          clearInterval(poll);
+          window.removeEventListener('posthog:ready', onReady);
+          resolve(window.posthog);
+        }, timeout);
+      });
+    }
 
-    const posthog = getPostHog();
+    const posthog = await waitForPosthog();
 
     if (!posthog){
       console.error("PostHog not initialized for AB Test:", abtest.dataset.abTestId);
-      return;
-    };
+      // proceed with fallback (variant A)
+    }
 
     const flagKey = abtest.dataset.abTestId;
 
@@ -80,11 +105,13 @@ const slotB = await Astro.slots.render('B');
 
     abtest.dataset.variant = variant;
 
-    posthog.capture('ab_test_variant_assigned', {
-      id: flagKey,
-      variant,
-      page: window.location.pathname,
-      timestamp: new Date().toISOString(),
-    });
+    if (posthog && typeof posthog.capture === 'function') {
+      posthog.capture('ab_test_variant_assigned', {
+        id: flagKey,
+        variant,
+        page: window.location.pathname,
+        timestamp: new Date().toISOString(),
+      });
+    }
   })();
 </script>
