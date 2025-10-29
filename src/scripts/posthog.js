@@ -1,4 +1,3 @@
-import { init } from "astro/virtual-modules/prefetch.js";
 import posthog from "posthog-js";
 
 let initialized = false;

@@ -1,7 +1,0 @@
-/* Quick CDN-backed Tailwind for dev/proof-of-concept.
-   For production, compile your Tailwind and serve the compiled CSS.
-*/
-@import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
-
-/* Site-specific fallbacks */
-body { font-family: Inter, Roboto, system-ui, sans-serif; }
