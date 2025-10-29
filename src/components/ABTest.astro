@@ -32,7 +32,10 @@ const slotB = await Astro.slots.render('B');
 <script is:inline>
   (async () => { 
     const abtest = document.currentScript.previousElementSibling;
-    if (!abtest) return;
+    if (!abtest) {
+      console.error("ABTest component not found in DOM.");
+      return;
+    };
 
     const { initPostHog, getPostHog } = await import('../scripts/posthog.js');
     await initPostHog(abtest.dataset.abTestKey, abtest.dataset.abTestHost);
@@ -40,16 +43,28 @@ const slotB = await Astro.slots.render('B');
     const posthog = getPostHog();
 
     if (!posthog){
-      console.log("PostHog not initialized for AB Test:", abtest.dataset.abTestId);
+      console.error("PostHog not initialized for AB Test:", abtest.dataset.abTestId);
       return;
     };
 
     const flagKey = abtest.dataset.abTestId;
 
-    let variant = await posthog.getFeatureFlag(flagKey);
-    if (variant !== 'A' && variant !== 'B') {
-      variant = "A";
-      console.log("FALLBACK to variant A for AB Test:", flagKey);
+    // Try to get feature flag from PostHog. If the SDK method isn't available
+    // or an error occurs, fallback to variant A and log a warning.
+    let variant = 'A';
+    try {
+      if (posthog && typeof posthog.getFeatureFlag === 'function') {
+        const result = await posthog.getFeatureFlag(flagKey);
+        if (result === 'A' || result === 'B') {
+          variant = result;
+        } else {
+          console.warn('Unexpected feature flag value, falling back to A:', result);
+        }
+      } else {
+        console.warn('posthog.getFeatureFlag not available; falling back to variant A');
+      }
+    } catch (err) {
+      console.error('Error fetching feature flag, falling back to A', err);
     }
 
     const a = abtest.querySelector('[data-variant="A"]');;
@@ -71,5 +86,5 @@ const slotB = await Astro.slots.render('B');
       page: window.location.pathname,
       timestamp: new Date().toISOString(),
     });
-  })
+  })();
 </script>
