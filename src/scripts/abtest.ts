@@ -1,5 +1,5 @@
 // src/scripts/abtest.ts
-import { initPosthog, posthogReady, getPosthog } from "./posthog";
+import { initPosthog, posthogReadyFull, getPosthog } from "./posthog";
 
 async function runABTests() {
   const tests = document.querySelectorAll<HTMLElement>("[data-abtest]");
@@ -12,7 +12,7 @@ async function runABTests() {
     const weight = parseFloat(el.dataset.weight || "0.5");
 
     await initPosthog(key, host);
-    await posthogReady();
+    await posthogReadyFull();
 
     const ph = getPosthog();
     let variant = ph?.getFeatureFlag?.(flagKey);
