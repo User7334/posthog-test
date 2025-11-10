@@ -3,6 +3,7 @@ import { initPosthog, posthogReadyFull, getPosthog } from "./posthog";
 
 async function runABTests() {
   const tests = document.querySelectorAll<HTMLElement>("[data-abtest]");
+  console.log("ABTEST.TS");
   if (!tests.length) return;
 
   for (const el of tests) {

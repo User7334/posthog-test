@@ -4,7 +4,7 @@ const host = import.meta.env.PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
 ---
 
 <script type="module" define:vars={{ key, host }}>
-  import { initPosthog } from "../scripts/posthog";
-  import "../scripts/abtest";
+  import { initPosthog } from "/src/scripts/posthog.ts";
+  import "/src/scripts/abtest.ts";
   initPosthog(key, host);
 </script>

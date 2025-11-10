@@ -1,7 +1,6 @@
 ---
 import astroLogo from '../assets/astro.svg';
 import background from '../assets/background.svg';
-import ABTest from './ABTest.astro';
 import '../styles/global.css';
 ---
 
@@ -12,26 +11,6 @@ import '../styles/global.css';
 			<a href="https://astro.build"
 				><img src={astroLogo.src} width="115" height="48" alt="Astro Homepage" /></a
 			>
-			<ABTest
-			id="homepage-hero-abtest"
-			key={import.meta.env.PUBLIC_POSTHOG_KEY}
-			host={import.meta.env.PUBLIC_POSTHOG_HOST}
-			weightA={0.5}
-			>
-				<Fragment slot="A">
-					<section style="background: lightblue; padding: 2rem">
-					<h2>Hero A</h2>
-					<button data-track="heroA-button">Klick A</button>
-					</section>
-				</Fragment>
-
-				<Fragment slot="B">
-					<section style="background: lightcoral; padding: 2rem">
-					<h2>Hero B</h2>
-					<button data-track="heroB-button">Klick B</button>
-					</section>
-				</Fragment>
-			</ABTest>
 			<section id="links">
 				<a class="button" href="https://docs.astro.build">Read our docs</a>
 				<a href="https://astro.build/chat"

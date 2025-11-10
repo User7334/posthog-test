@@ -2,6 +2,7 @@
 let initPromise: Promise<void> | null = null;
 
 export function initPosthog(publicKey: string, host = "https://app.posthog.com") {
+  console.log("INITPOSTHOG");
   if (typeof window === "undefined") return;
   if ((window as any).posthog) return initPromise ?? Promise.resolve();
 
@@ -17,13 +18,18 @@ export function initPosthog(publicKey: string, host = "https://app.posthog.com")
       });
 
       (window as any).posthog = ph;
+
+      console.log("Successfully initialized")
     });
   }
+
+  console.log("Already initialized")
 
   return initPromise;
 }
 
 export async function posthogReadyFull(): Promise<void> {
+  console.log("POSTHOGREADYFULL");
   if (typeof window === "undefined") return;
   const ph = (window as any).posthog;
   if (!ph) return;
@@ -46,5 +52,6 @@ export async function posthogReadyFull(): Promise<void> {
 }
 
 export function getPosthog() {
+  console.log("GETPOSTHOG");
   return (window as any).posthog;
 }
