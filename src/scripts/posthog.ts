@@ -1,57 +1,19 @@
 // src/scripts/posthog.ts
-let initPromise: Promise<void> | null = null;
+import posthog from "posthog-js";
 
-export function initPosthog(publicKey: string, host = "https://app.posthog.com") {
-  console.log("INITPOSTHOG");
-  if (typeof window === "undefined") return;
-  if ((window as any).posthog) return initPromise ?? Promise.resolve();
-
-  if (!initPromise) {
-    initPromise = import("posthog-js").then(({ default: ph }) => {
-      if ((window as any).posthog) return;
-
-      ph.init(publicKey, {
-        api_host: host,
-        persistence: "localStorage",
-        capture_pageview: true,
-        disable_session_recording: true,
-      });
-
-      (window as any).posthog = ph;
-
-      console.log("Successfully initialized")
-    });
+export function initPosthog(publicKey: string, host: string) {
+  if (typeof window === "undefined") {
+    return;
   }
-
-  console.log("Already initialized")
-
-  return initPromise;
-}
-
-export async function posthogReadyFull(): Promise<void> {
-  console.log("POSTHOGREADYFULL");
-  if (typeof window === "undefined") return;
-  const ph = (window as any).posthog;
-  if (!ph) return;
-
-  // Wenn Flags bereits geladen sind, direkt weiter
-  if (ph.featureFlags?.isLoaded) return;
-
-  // Ansonsten auf den Load warten (max. 500ms)
-  await new Promise<void>((resolve) => {
-    let settled = false;
-    const timeout = setTimeout(() => {
-      if (!settled) resolve();
-    }, 500);
-    ph.onFeatureFlags?.(() => {
-      settled = true;
-      clearTimeout(timeout);
-      resolve();
-    });
+  if ((window as any).posthog) {
+    return;
+  }
+  posthog.init(publicKey, {
+    api_host: host,
+    persistence: "localStorage",    // localStorage wie gewünscht
+    capture_pageview: true,
+    autocapture: true,
   });
-}
-
-export function getPosthog() {
-  console.log("GETPOSTHOG");
-  return (window as any).posthog;
+  (window as any).posthog = posthog;
+  console.log("✅ PostHog initialisiert", publicKey, host);
 }
