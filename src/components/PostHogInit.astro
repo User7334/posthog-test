@@ -1,1 +1,7 @@
-<script type="module" src="/_posthog.client.js"></script>
+---
+import "../scripts/posthog-entry.ts"; // Nur damit Astro das Modul bundelt
+---
+
+<script type="module">
+  import "../scripts/posthog-entry.ts"; // Führt es im Browser aus
+</script>
