@@ -25,11 +25,13 @@ async function runABTests() {
     const a = el.querySelector('[data-variant="A"]');
     const b = el.querySelector('[data-variant="B"]');
     if (variant === "A") {
-      a?.removeAttribute("hidden");
-      b?.setAttribute("hidden", "");
+        console.log("Variant A selected");
+        a?.removeAttribute("hidden");
+        b?.setAttribute("hidden", "");
     } else {
-      b?.removeAttribute("hidden");
-      a?.setAttribute("hidden", "");
+        console.log("Variant B selected");
+        b?.removeAttribute("hidden");
+        a?.setAttribute("hidden", "");
     }
 
     el.dataset.variant = variant;
