@@ -1,9 +1,9 @@
 ---
-import PostHogLoader from "../components/PostHogLoader.astro";
+import PostHogInit from "../components/PostHogInit.astro";
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="de">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
@@ -11,10 +11,10 @@ import PostHogLoader from "../components/PostHogLoader.astro";
 		<meta name="generator" content={Astro.generator} />
     <link rel="stylesheet" href="/styles/global.css" />
 		<title>Astro Basics</title>
-    <PostHogLoader />
 	</head>
 	<body>
 		<slot />
+		<PostHogInit />
 	</body>
 </html>
 

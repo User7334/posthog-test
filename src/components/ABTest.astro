@@ -1,73 +1,23 @@
 ---
-// src/components/ABTest.astro
 interface Props {
-  id: string; // Feature Flag Key in PostHog
+  id: string;          // Feature-Flag-Key in PostHog
+  key: string;         // PUBLIC_POSTHOG_KEY
+  host: string;        // PUBLIC_POSTHOG_HOST
+  weightA?: number;    // z. B. 0.5
 }
 
-const { id } = Astro.props;
-
-const hasA = Astro.slots.has('A');
-const hasB = Astro.slots.has('B');
-if (!hasA || !hasB) {
-  throw new Error(`[ABTest:${id}] Both slots "A" and "B" must be defined.`);
-}
-
-const slotA = await Astro.slots.render('A');
-const slotB = await Astro.slots.render('B');
+const { id, key, host, weightA = 0.5 } = Astro.props;
+const slotA = await Astro.slots.render("A");
+const slotB = await Astro.slots.render("B");
 ---
 
-<div class="abtest" data-ab-test-id={id}>
-  <div data-variant="A" set:html={slotA}></div>
-  <div data-variant="B" hidden set:html={slotB}></div>
+<div
+  data-abtest
+  data-id={id}
+  data-key={key}
+  data-host={host}
+  data-weight={String(weightA)}
+>
+  <div data-variant="A" hidden><Fragment set:html={slotA} /></div>
+  <div data-variant="B" hidden><Fragment set:html={slotB} /></div>
 </div>
-
-<script type="module">
-  function waitForPosthog(timeout = 4000) {
-    return new Promise((resolve, reject) => {
-      const start = Date.now();
-      (function check() {
-        if (window.posthog) return resolve(window.posthog);
-        if (Date.now() - start > timeout) return reject(new Error("PostHog not found"));
-        requestAnimationFrame(check);
-      })();
-    });
-  }
-
-  (async () => {
-    const root = document.currentScript?.closest('.abtest');
-    if (!root) return;
-
-    const flagKey = root.dataset.abTestId;
-
-    let ph;
-    try { ph = await waitForPosthog(); } catch (err) {
-      console.warn("ABTest: PostHog not ready", err);
-      return;
-    }
-
-    // Lade Feature-Flags und bestimme Variante
-    ph.onFeatureFlags(async () => {
-      let variant = 'A';
-      try {
-        const result = await ph.getFeatureFlag(flagKey);
-        if (result === 'B') variant = 'B';
-      } catch (err) {
-        console.warn("ABTest: Error fetching flag", err);
-      }
-
-      const a = root.querySelector('[data-variant="A"]');
-      const b = root.querySelector('[data-variant="B"]');
-      if (a && b) {
-        a.hidden = variant !== 'A';
-        b.hidden = variant !== 'B';
-      }
-
-      ph.capture('ab_test_variant_assigned', {
-        id: flagKey,
-        variant,
-        page: window.location.pathname,
-        timestamp: new Date().toISOString(),
-      });
-    });
-  })();
-</script>
