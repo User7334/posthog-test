@@ -11,6 +11,9 @@ import Layout from '../layouts/Layout.astro';
 		button?.addEventListener('click', () => {
 			if (window.posthog) {
 				window.posthog.capture('home_button_clicked');
+				button.classList.add('text-green-500');
+			} else {
+				button.classList.add('text-red-500');
 			}
 		});
 	</script>   
