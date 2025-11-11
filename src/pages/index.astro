@@ -10,7 +10,12 @@ import Layout from '../layouts/Layout.astro';
 		const button = document.querySelector('.main-button');
 		button?.addEventListener('click', () => {
 			if (window.posthog) {
-				window.posthog.capture('home_button_clicked');
+				if (window.posthog.getFeatureFlag('button-variants') === 'control') {
+					window.posthog.capture('home_button_clicked', { variant: 'control' } );
+				}
+				if (window.posthog.getFeatureFlag('button-variants') === 'test') {
+					window.posthog.capture('home_button_clicked', { variant: 'test' } );
+				}
 				button.classList.add('text-green-500');
 			} else {
 				button.classList.add('text-red-500');
