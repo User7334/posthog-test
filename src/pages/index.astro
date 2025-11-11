@@ -5,4 +5,12 @@ import Layout from '../layouts/Layout.astro';
 
 <Layout>
 	<Welcome />
+	<script>
+		const button = document.querySelector('.main-button');
+		button?.addEventListener('click', () => {
+			if (window.posthog) {
+				window.posthog.capture('home_button_clicked');
+			}
+		});
+	</script>   
 </Layout>

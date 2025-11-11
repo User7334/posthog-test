@@ -12,6 +12,13 @@ declare global {
     readonly props?: Record<string, any>;
     readonly slots?: Record<string, any>;
   };
+
+  interface Window {
+    posthog?: {
+      capture: (eventName: string, properties?: Record<string, any>) => void;
+      [key: string]: any;
+    };
+  }
 }
 
 export {};

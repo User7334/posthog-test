@@ -1,5 +1,5 @@
 ---
-import "../scripts/posthog.client.ts";
+import Posthog from "../components/posthog.astro";
 import "../styles/global.css";
 ---
 
@@ -11,6 +11,7 @@ import "../styles/global.css";
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Astro Basics</title>
+		<Posthog />
 	</head>
 	<body>
 		<slot />
