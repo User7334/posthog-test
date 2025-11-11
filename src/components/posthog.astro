@@ -11,10 +11,8 @@
         const button = document.querySelector('.main-button');
         if (posthog.getFeatureFlag('button-variantst') === 'control') {
             button.innerText = 'Control variant';
-            posthog.register({ button_variant: 'control' });
         } else if (posthog.getFeatureFlag('button-variants') === 'test') {
             button.innerText = 'Test variant';
-            posthog.register({ button_variant: 'test' });
         }
       });
     }
