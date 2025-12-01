@@ -26,16 +26,25 @@ const id = `abtest-${Math.random().toString(36).slice(2,9)}`;
     console.debug('ABTest:', msg);
   }
 
-  const abtestId = '{id}';
+  // Robustly find the button this script belongs to.
+  // Prefer the previousElementSibling of the current script (the button we render just above),
+  // otherwise fall back to the first element with `data-abtest-id` nearby.
   let button = null;
   try {
-    button = document.querySelector(`[data-abtest-id="${abtestId}"]`);
+    const scriptEl = document.currentScript || (function(){const s=document.getElementsByTagName('script'); return s[s.length-1];})();
+    const prev = scriptEl && scriptEl.previousElementSibling;
+    if (prev && (prev.matches?.('.abtest-button') || prev.hasAttribute?.('data-abtest-id'))) {
+      button = prev;
+    } else {
+      // fallback: try to find a nearby element with data-abtest-id
+      button = document.querySelector('[data-abtest-id]');
+    }
   } catch (e) {
     /* ignore */
   }
   if (!button) {
-    console.warn('ABTest: button element not found for id', abtestId);
-    addDebug('button element not found for id ' + abtestId);
+    console.warn('ABTest: button element not found');
+    addDebug('button element not found');
   }
 
   // If a stored assignment exists in localStorage, apply it immediately (sticky)
