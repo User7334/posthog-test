@@ -1,139 +1,29 @@
 ---
 
 ---
-<script type="module" is:inline>
+<script is:inline>
+  // PostHog snippet
   !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-  
-  // --- simple on-page debug UI helpers ---
-  function ensureDebugContainer() {
-    try {
-      let c = document.getElementById('posthog-debug');
-      if (c) return c;
-      c = document.createElement('div');
-      c.id = 'posthog-debug';
-      c.style.cssText = 'position:fixed;bottom:12px;right:12px;max-width:360px;max-height:40vh;overflow:auto;font-family:monospace;font-size:12px;background:rgba(0,0,0,0.8);color:#fff;padding:8px;border-radius:6px;z-index:99999;pointer-events:auto;';
-      const title = document.createElement('div');
-      title.style.cssText = 'font-weight:600;margin-bottom:6px;font-size:12px';
-      title.textContent = 'PostHog debug';
-      c.appendChild(title);
-      document.body.appendChild(c);
-      return c;
-    } catch (e) {
-      console.debug('ensureDebugContainer failed', e);
-      return null;
-    }
-  }
 
-  function addDebug(msg) {
-    try {
-      const c = ensureDebugContainer();
-      if (!c) return;
-      const el = document.createElement('div');
-      el.textContent = new Date().toISOString() + ' — ' + msg;
-      el.style.padding = '2px 0';
-      c.appendChild(el);
-    } catch (e) {
-      console.debug('addDebug failed', e);
-    }
-  }
-
-  // Setup a promise + resolver so other components can `await` posthog being ready
-  if (!window.posthogReady) {
-    let _resolve;
-    window.posthogReady = new Promise((resolve) => { _resolve = resolve; });
-    window.__posthogResolve = _resolve;
-    addDebug('posthogReady promise created');
-  }
-
-  addDebug('calling posthog.init');
-
-  const KEY = import.meta.env.PUBLIC_POSTHOG_KEY || import.meta.env.VITE_PUBLIC_POSTHOG_KEY || 'phc_KOcWjzbh56k1BfKTHlPJD0PGavdy7gMd7qVME4syB40';
-  const HOST = import.meta.env.PUBLIC_POSTHOG_HOST || import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
-  if (!KEY) {
-    addDebug('PUBLIC_POSTHOG_KEY not set - skipping init');
-    console.warn('PostHog public key not set (PUBLIC_POSTHOG_KEY)');
-  } else {
-    posthog.init(KEY, {
-      api_host: HOST,
-      defaults: '2025-05-24',
-      persistence: 'localStorage',  // use localStorage for persistent session state
-      loaded: (posthog) => {
-        // Important: wait for onFeatureFlags to ensure flags are actually loaded
-        posthog.onFeatureFlags(() => {
-          addDebug('posthog.onFeatureFlags() fired - flags are ready');
-          try {
-            window.__posthogLoaded = true;
-            if (window.__posthogResolve) {
-              window.__posthogResolve(posthog);
-              addDebug('window.__posthogResolve() successful (after flags loaded)');
-            } else {
-              addDebug('window.__posthogResolve not present');
-            }
-          } catch (e) {
-            console.warn('PostHog: could not set ready promise', e);
-            addDebug('window.__posthogResolve() failed: ' + (e && e.message ? e.message : String(e)));
-          }
-          try {
-            window.dispatchEvent(new CustomEvent('posthog:loaded', { detail: posthog }));
-            addDebug('posthog:loaded dispatched (after flags loaded)');
-          } catch (e) {
-            /* ignore */
+  posthog.init('phc_KOcWjzbh56k1BfKTHlPJD0PGavdy7gMd7qVME4syB40', {
+    api_host: 'https://us.i.posthog.com',
+    loaded: function(posthog) {
+      posthog.onFeatureFlags(function() {
+        // Apply ABTest variants when flags are ready
+        // Each [data-flag] element gets its variant independently
+        document.querySelectorAll('[data-flag]').forEach(function(el) {
+          const flag = el.getAttribute('data-flag');
+          const variant = posthog.getFeatureFlag(flag);
+          const control = el.getAttribute('data-control');
+          const test = el.getAttribute('data-test');
+          
+          if (variant === 'control' && control) {
+            el.innerText = control;
+          } else if (variant === 'test' && test) {
+            el.innerText = test;
           }
         });
-      }
-    })
-  }
-
-  // --- central ABTest handler ---
-  // Apply stored variants immediately (so sticky assignments show up before PostHog loads)
-  function applyStoredVariants() {
-    try {
-      document.querySelectorAll('[data-flag]').forEach((el) => {
-        try {
-          const flag = el.getAttribute('data-flag');
-          const stored = localStorage.getItem(`abtest-${flag}`);
-          if (stored) {
-            addDebug(`applyStoredVariants: found ${stored} for ${flag}`);
-            if (stored === 'control') el.innerText = el.getAttribute('data-control') || el.innerText;
-            else if (stored === 'test') el.innerText = el.getAttribute('data-test') || el.innerText;
-          }
-        } catch (e) { /* ignore per-element errors */ }
       });
-    } catch (e) { console.debug('applyStoredVariants failed', e); }
-  }
-
-  function applyPosthogVariants(ph) {
-    try {
-      if (!ph) ph = window.posthog;
-      if (!ph) return;
-      document.querySelectorAll('[data-flag]').forEach((el) => {
-        try {
-          const flag = el.getAttribute('data-flag');
-          const val = ph.getFeatureFlag ? ph.getFeatureFlag(flag) : undefined;
-          addDebug(`applyPosthogVariants: ${flag} => ${String(val)}`);
-          if (val === 'control') {
-            el.innerText = el.getAttribute('data-control') || el.innerText;
-            try { localStorage.setItem(`abtest-${flag}`, 'control'); } catch (e) {}
-          } else if (val === 'test') {
-            el.innerText = el.getAttribute('data-test') || el.innerText;
-            try { localStorage.setItem(`abtest-${flag}`, 'test'); } catch (e) {}
-          }
-        } catch (e) { /* ignore per-element errors */ }
-      });
-    } catch (e) { console.debug('applyPosthogVariants failed', e); }
-  }
-
-  // Run stored variants as soon as DOM is ready
-  if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    applyStoredVariants();
-  } else {
-    document.addEventListener('DOMContentLoaded', applyStoredVariants, { once: true });
-  }
-
-  // When PostHog is ready (promise or event), apply server-side variants
-  if (window.posthogReady && typeof window.posthogReady.then === 'function') {
-    window.posthogReady.then((ph) => applyPosthogVariants(ph)).catch(() => {});
-  } else {
-    window.addEventListener('posthog:loaded', (ev) => applyPosthogVariants(ev.detail || window.posthog), { once: true });
-  }
+    }
+  });
 </script>

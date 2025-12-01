@@ -1,7 +1,7 @@
 ---
-const { flag = 'button-variants', control = 'Control variant', test = 'Test variant' } = Astro.props;
+const { flag, control, test } = Astro.props;
 ---
 
-<button class="abtest-button text-red-500" data-flag={flag} data-control={control} data-test={test}>
+<button class="abtest-button" data-flag={flag} data-control={control} data-test={test}>
   {control}
 </button>
