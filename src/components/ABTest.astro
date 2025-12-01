@@ -27,23 +27,18 @@ const id = `abtest-${Math.random().toString(36).slice(2,9)}`;
     console.debug('ABTest:', msg);
   }
 
+  // Each instance has a unique id generated server-side and set as attribute
+  const abtestId = '{id}';
   let button;
   try {
-    // Preferred: find the button as the previous element sibling of this script
-    if (document.currentScript && document.currentScript.previousElementSibling) {
-      button = document.currentScript.previousElementSibling;
-    }
+    // Find the specific button by its data attribute using the embedded id
+    button = document.querySelector(`[data-abtest-id="${abtestId}"]`);
   } catch (e) {
     /* ignore */
   }
   if (!button) {
-    // Fallback: find by data-abtest-id attribute
-    try {
-      const el = document.querySelector('[data-abtest-id]');
-      if (el) button = el;
-    } catch (e) {
-      /* ignore */
-    }
+    console.warn('ABTest: button element not found for id', abtestId);
+    addDebug('button element not found for id ' + abtestId);
   }
 
   if (!button) {
