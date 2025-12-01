@@ -36,6 +36,16 @@ const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST;
               testWrapper.classList.add('hidden');
               testWrapper.classList.remove('bg-gray-400');
             }
+            try {
+              if (window.posthog && typeof window.posthog.capture === 'function') {
+                window.posthog.capture('$feature_flag_called', {
+                  '$feature_flag': flag,
+                  '$feature_flag_response': 'control'
+                });
+              }
+            } catch (e) {
+              console.warn('posthog capture failed', e);
+            }
           } else if (variant === 'test') {
             if (controlWrapper) {
               controlWrapper.classList.add('hidden');
@@ -44,6 +54,16 @@ const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST;
             if (testWrapper) {
               testWrapper.classList.remove('hidden');
               testWrapper.classList.add('bg-gray-400');
+            }
+            try {
+              if (window.posthog && typeof window.posthog.capture === 'function') {
+                window.posthog.capture('$feature_flag_called', {
+                  '$feature_flag': flag,
+                  '$feature_flag_response': 'test'
+                });
+              }
+            } catch (e) {
+              console.warn('posthog capture failed', e);
             }
           }
         });
