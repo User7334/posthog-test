@@ -53,7 +53,10 @@ const attrFlags = JSON.stringify(experiments);
         }
 
         flags.forEach((flag) => {
-            if (window.posthog) window.posthog.capture(featureFlag, { flag });
+            if (window.posthog) {
+                window.posthog.capture(featureFlag, { flag });
+                console.log(`Captured event for flag: ${flag}`);
+            }
         });
 
         console.log("Captured");
