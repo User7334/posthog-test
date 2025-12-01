@@ -1,0 +1,44 @@
+---
+const { flag = 'button-variants', control = 'Control variant', test = 'Test variant' } = Astro.props;
+---
+
+<button class="abtest-button text-red-500" data-flag={flag} data-control={control} data-test={test}>
+  {control}
+</button>
+
+<script type="module" is:inline>
+  // This script runs on the client when the component is loaded.
+  // It waits for PostHog to be ready (via promise, event, or immediate) and
+  // then applies the variant to the button rendered above.
+  const button = document.currentScript.previousElementSibling;
+  if (!button) throw new Error('ABTest: button element not found');
+
+  function applyVariant(posthogInstance) {
+    try {
+      const flagName = button.dataset.flag;
+      const val = posthogInstance?.getFeatureFlag ? posthogInstance.getFeatureFlag(flagName) : undefined;
+      if (val === 'control') {
+        button.innerText = button.dataset.control;
+        button.classList.add('text-blue-500');
+      } else if (val === 'test') {
+        button.innerText = button.dataset.test;
+        button.classList.add('text-green-500');
+      }
+    } catch (e) {
+      console.warn('ABTest: error applying variant', e);
+    }
+  }
+
+  // If already marked as loaded, run immediately
+  if (window.__posthogLoaded && window.posthog) {
+    applyVariant(window.posthog);
+  } else if (window.posthogReady && typeof window.posthogReady.then === 'function') {
+    // Prefer awaiting the shared promise when available
+    window.posthogReady.then((ph) => applyVariant(ph)).catch(() => {});
+  } else {
+    // Fallback to listening to a custom event
+    window.addEventListener('posthog:loaded', (ev) => {
+      applyVariant(ev.detail || window.posthog);
+    }, { once: true });
+  }
+</script>

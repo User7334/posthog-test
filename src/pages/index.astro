@@ -1,6 +1,7 @@
 ---
 import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
+import ABTest from '../components/ABTest.astro';
 ---
 
 <Layout>
@@ -8,8 +9,11 @@ import Layout from '../layouts/Layout.astro';
 		<Welcome />
 		<h2>AB-Test</h2>
 		<button class="main-button max-w-fit">Click me!</button>
+		<h2>New AB Test</h2>
+		<ABTest flag="button-variants" control="Control variant" test="Test variant" />
 	</div>
 	<script>
+		/*
 		const button = document.querySelector('.main-button');
 		button?.addEventListener('click', () => {
 			if (window.posthog) {
@@ -24,5 +28,6 @@ import Layout from '../layouts/Layout.astro';
 				button.classList.add('text-red-500');
 			}
 		});
+		*/
 	</script>   
 </Layout>
