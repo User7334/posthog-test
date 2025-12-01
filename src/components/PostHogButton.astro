@@ -1,0 +1,54 @@
+---
+type Props = {
+  experiments: string[];
+  flag: string;
+};
+
+const { experiments, flag }: Props = Astro.props;
+
+// Wir speichern die Flags als JSON, damit es sauber übertragen wird
+const attrFlags = JSON.stringify(experiments);
+---
+
+<button 
+  class="posthog-button w-fit"
+  data-ph-flags={attrFlags}
+  data-flag={flag}
+>
+  <slot />
+</button>
+
+<script>
+    document.addEventListener("click", function (event) {
+        const targetEl = event.target as HTMLElement | null;
+        if (!targetEl) return;
+
+        const button = targetEl.closest(".posthog-button") as HTMLElement | null;
+        if (!button) return;
+
+        const raw = button.getAttribute("data-ph-flags");
+        const featureFlag = button.getAttribute("data-flag");
+
+        if (!featureFlag) {
+            console.error("No feature flag specified on PostHogButton.");
+            return;
+        }
+        
+        let flags = [];
+        try {
+            flags = JSON.parse(raw || "[]");
+        } catch (e) {
+            console.error("Invalid flags:", raw);
+            return;
+        }
+
+        if (!window.posthog) {
+            console.warn("PostHog not initialized yet.");
+            return;
+        }
+
+        flags.forEach((flag: string) => {
+            if (window.posthog) window.posthog.capture(featureFlag, { flag });
+        });
+    });
+</script>
