@@ -17,6 +17,13 @@ const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST;
         document.querySelectorAll('[data-abtest-flag]').forEach(function(el) {
           const flag = el.getAttribute('data-abtest-flag');
           const variant = posthog.getFeatureFlag(flag);
+
+          posthog.capture('$feature_flag_called', {
+            $feature_flag: flag,
+            $feature_flag_response: variant
+          });
+
+
           const controlWrapper = el.querySelector('.abtest-control');
           const testWrapper = el.querySelector('.abtest-test');
 
