@@ -51,38 +51,28 @@
     api_host:'https://us.i.posthog.com',
     defaults: '2025-05-24',
     loaded: (posthog) => {
-
-      /*
+      // Important: wait for onFeatureFlags to ensure flags are actually loaded
       posthog.onFeatureFlags(() => {
-        const button = document.querySelector('.main-button');
-        if (posthog.getFeatureFlag('button-variants') === 'control') {
-            button.innerText = 'Control variant';
-        } else if (posthog.getFeatureFlag('button-variants') === 'test') {
-            button.innerText = 'Test variant';
+        addDebug('posthog.onFeatureFlags() fired - flags are ready');
+        try {
+          window.__posthogLoaded = true;
+          if (window.__posthogResolve) {
+            window.__posthogResolve(posthog);
+            addDebug('window.__posthogResolve() successful (after flags loaded)');
+          } else {
+            addDebug('window.__posthogResolve not present');
+          }
+        } catch (e) {
+          console.warn('PostHog: could not set ready promise', e);
+          addDebug('window.__posthogResolve() failed: ' + (e && e.message ? e.message : String(e)));
+        }
+        try {
+          window.dispatchEvent(new CustomEvent('posthog:loaded', { detail: posthog }));
+          addDebug('posthog:loaded dispatched (after flags loaded)');
+        } catch (e) {
+          /* ignore */
         }
       });
-      */
-
-      // mark as loaded, resolve promise and dispatch a DOM event so any ABTest
-      // components can react immediately when PostHog is ready.
-      try {
-        window.__posthogLoaded = true;
-        if (window.__posthogResolve) {
-          window.__posthogResolve(posthog);
-          addDebug('window.__posthogResolve() successful');
-        } else {
-          addDebug('window.__posthogResolve not present');
-        }
-      } catch (e) {
-        console.warn('PostHog: could not set ready promise', e);
-        addDebug('window.__posthogResolve() failed: ' + (e && e.message ? e.message : String(e)));
-      }
-      try {
-        window.dispatchEvent(new CustomEvent('posthog:loaded', { detail: posthog }));
-        addDebug('posthog:loaded dispatched');
-      } catch (e) {
-        /* ignore */
-      }
     }
   })
 </script>
