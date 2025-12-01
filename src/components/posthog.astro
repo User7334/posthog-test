@@ -50,6 +50,7 @@
   posthog.init('phc_KOcWjzbh56k1BfKTHlPJD0PGavdy7gMd7qVME4syB40', {
     api_host:'https://us.i.posthog.com',
     defaults: '2025-05-24',
+    persistence: 'localStorage',  // use localStorage for persistent session state
     loaded: (posthog) => {
       // Important: wait for onFeatureFlags to ensure flags are actually loaded
       posthog.onFeatureFlags(() => {

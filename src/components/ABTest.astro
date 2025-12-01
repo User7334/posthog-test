@@ -61,10 +61,18 @@ const id = `abtest-${Math.random().toString(36).slice(2,9)}`;
         button.innerText = button.dataset.control;
         button.classList.add('text-blue-500');
         addDebug('applied control variant');
+        // Optional: persist to localStorage
+        try {
+          localStorage.setItem(`abtest-${flagName}`, 'control');
+        } catch (e) { /* ignore localStorage errors */ }
       } else if (val === 'test') {
         button.innerText = button.dataset.test;
         button.classList.add('text-green-500');
         addDebug('applied test variant');
+        // Optional: persist to localStorage
+        try {
+          localStorage.setItem(`abtest-${flagName}`, 'test');
+        } catch (e) { /* ignore localStorage errors */ }
       } else {
         addDebug('no matching variant (value: ' + String(val) + ')');
       }
