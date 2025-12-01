@@ -16,43 +16,7 @@ const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST;
         // Each [data-flag] element gets its variant independently
         document.querySelectorAll('[data-abtest-flag]').forEach(function(el) {
           const flag = el.getAttribute('data-abtest-flag');
-
-          // localStorage helpers: store variant with timestamp, expire after 1 minute
-          function getStoredVariant(flagKey) {
-            try {
-              const raw = localStorage.getItem('abtest:' + flagKey);
-              if (!raw) return null;
-              const parsed = JSON.parse(raw);
-              if (!parsed || !parsed.variant || !parsed.ts) return null;
-              const age = Date.now() - parsed.ts;
-              if (age > 60 * 1000) { // older than 1 minute
-                localStorage.removeItem('abtest:' + flagKey);
-                posthog.reset();
-                return null;
-              }
-              return parsed.variant;
-            } catch (e) {
-              return null;
-            }
-          }
-
-          function setStoredVariant(flagKey, variant) {
-            try {
-              localStorage.setItem('abtest:' + flagKey, JSON.stringify({ variant: variant, ts: Date.now() }));
-            } catch (e) {
-              // ignore storage errors
-            }
-          }
-
-          // try to reuse a recent stored assignment for testing convenience
-          var variant = getStoredVariant(flag);
-          if (!variant) {
-            variant = posthog.getFeatureFlag(flag);
-            if (variant) setStoredVariant(flag, variant);
-          } else {
-            console.log('Using stored variant for', flag, ':', variant);
-          }
-
+          const variant = posthog.getFeatureFlag(flag);
           const controlWrapper = el.querySelector('.abtest-control');
           const testWrapper = el.querySelector('.abtest-test');
 
