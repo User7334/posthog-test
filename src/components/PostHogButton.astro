@@ -33,7 +33,7 @@ const attrFlags = JSON.stringify(experiments);
             console.error("No feature flag specified on PostHogButton.");
             return;
         }
-        
+
         let flags = [];
         try {
             flags = JSON.parse(raw || "[]");
@@ -50,5 +50,7 @@ const attrFlags = JSON.stringify(experiments);
         flags.forEach((flag: string) => {
             if (window.posthog) window.posthog.capture(featureFlag, { flag });
         });
+
+        button.classList.add("opacity-50");
     });
 </script>
