@@ -11,8 +11,12 @@ import ABTest from '../components/ABTest.astro';
 		<button class="main-button max-w-fit">Click me!</button>
 		<h2>New AB Test</h2>
 		<ABTest flag="buttonexperiment">
-			<div class="text-green-500" slot="control">Button Control</div>
-			<div class="text-red-500" slot="test">Button Test</div>
+			<button class="text-green-500 border-2 rounded-xl" slot="control">Button Control</button>
+			<button class="text-red-500 border-2 rounded-xl" slot="test">Button Test</button>
+		</ABTest>
+		<ABTest flag="hero-test">
+			<div class="text-green-500" slot="control">Hero Control</div>
+			<div class="text-red-500" slot="test">Hero Test</div>
 		</ABTest>
 	</div>  
 </Layout>

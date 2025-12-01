@@ -7,12 +7,13 @@
 
   posthog.init('phc_KOcWjzbh56k1BfKTHlPJD0PGavdy7gMd7qVME4syB40', {
     api_host: 'https://us.i.posthog.com',
+    defaults: '2025-11-30',
     loaded: function(posthog) {
       posthog.onFeatureFlags(function() {
         // Apply ABTest variants when flags are ready
         // Each [data-flag] element gets its variant independently
-        document.querySelectorAll('[abtest-data-flag]').forEach(function(el) {
-          const flag = el.getAttribute('abtest-data-flag');
+        document.querySelectorAll('[data-abtest-flag]').forEach(function(el) {
+          const flag = el.getAttribute('data-abtest-flag');
           const variant = posthog.getFeatureFlag(flag);
           const controlWrapper = el.querySelector('.abtest-control');
           const testWrapper = el.querySelector('.abtest-test');
