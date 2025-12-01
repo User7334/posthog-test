@@ -27,6 +27,7 @@ const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST;
               const age = Date.now() - parsed.ts;
               if (age > 60 * 1000) { // older than 1 minute
                 localStorage.removeItem('abtest:' + flagKey);
+                posthog.reset();
                 return null;
               }
               return parsed.variant;
