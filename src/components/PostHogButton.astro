@@ -18,12 +18,12 @@ const attrFlags = JSON.stringify(experiments);
   <slot />
 </button>
 
-<script>
+<script is:inline>
     document.addEventListener("click", function (event) {
-        const targetEl = event.target as HTMLElement | null;
+        const targetEl = event.target;
         if (!targetEl) return;
 
-        const button = targetEl.closest(".posthog-button") as HTMLElement | null;
+        const button = targetEl.closest(".posthog-button");
         if (!button) return;
 
         button.classList.add("bg-red-500");
@@ -51,7 +51,7 @@ const attrFlags = JSON.stringify(experiments);
             return;
         }
 
-        flags.forEach((flag: string) => {
+        flags.forEach((flag) => {
             if (window.posthog) window.posthog.capture(featureFlag, { flag });
         });
 
