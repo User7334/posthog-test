@@ -24,6 +24,7 @@ const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST;
           const testWrapper = el.querySelector('.abtest-test');
 
           if (variant === 'control') {
+            controlWrappler.setAttribute('data-variant', 'control');
             if (controlWrapper) {
               controlWrapper.classList.remove('hidden');
               controlWrapper.classList.add('bg-gray-400');
@@ -33,6 +34,7 @@ const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST;
               testWrapper.classList.remove('bg-gray-400');
             }
           } else if (variant === 'test') {
+            controlWrappler.setAttribute('data-variant', 'test');
             if (controlWrapper) {
               controlWrapper.classList.add('hidden');
               controlWrapper.classList.remove('bg-gray-400');

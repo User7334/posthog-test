@@ -2,7 +2,7 @@
 const { flag } = Astro.props;
 ---
 
-<div class="abtest-wrapper" data-abtest-flag={flag}>
+<div class="abtest-wrapper" id={flag} data-abtest-flag={flag} data-variant="control">
   <div class="abtest-control"><slot name="control" /></div>
   <div class="abtest-test hidden"><slot name="test" /></div>
 </div>

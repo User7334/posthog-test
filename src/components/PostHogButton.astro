@@ -54,7 +54,12 @@ const attrFlags = JSON.stringify(experiments);
 
         flags.forEach((flag) => {
             if (window.posthog) {
-                window.posthog.capture(featureFlag, { flag });
+                let variant = document.getElementById(flag)?.getAttribute('data-variant');
+                window.posthog.capture(featureFlag, {
+                    flag,
+                    variant,
+                    element: "button",
+                });
                 console.log(`Captured event for flag: ${flag}`);
             }
         });
