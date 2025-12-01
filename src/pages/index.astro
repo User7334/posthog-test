@@ -20,7 +20,7 @@ import PostHogButton from '../components/PostHogButton.astro';
 			<div class="text-red-500" slot="test">Hero Test</div>
 		</ABTest>
 		<PostHogButton flag="button_clicked" experiments={['buttonexperiment']}>
-			<button class="bg-amber-600 text-white w-fit rounded-full border-2 border-amber-700 px-2 hover:bg-amber-700 cursor-pointer">Capture</button>
+			<div class="bg-amber-600 text-white w-fit rounded-full border-2 border-amber-700 px-2 hover:bg-amber-700 cursor-pointer">Capture</div>
 		</PostHogButton>
 	</div>  
 </Layout>

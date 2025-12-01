@@ -24,10 +24,11 @@ const attrFlags = JSON.stringify(experiments);
         const targetEl = event.target;
         if (!targetEl) return;
 
+        console.log("clicked targetEl");
+
         const button = targetEl.closest(".posthog-button");
         if (!button) return;
 
-        button.classList.add("bg-red-500");
         console.log("PostHogButton clicked");
 
         const raw = button.getAttribute("data-ph-flags");
@@ -37,8 +38,6 @@ const attrFlags = JSON.stringify(experiments);
             console.error("No feature flag specified on PostHogButton.");
             return;
         }
-
-        button.classList.add("bg-yellow-500");
 
         let flags = [];
         try {
@@ -58,7 +57,5 @@ const attrFlags = JSON.stringify(experiments);
         });
 
         console.log("Captured");
-
-        button.classList.add("bg-green-500");
     });
 </script>
