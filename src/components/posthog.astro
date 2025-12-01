@@ -11,16 +11,33 @@
       posthog.onFeatureFlags(function() {
         // Apply ABTest variants when flags are ready
         // Each [data-flag] element gets its variant independently
-        document.querySelectorAll('[data-flag]').forEach(function(el) {
-          const flag = el.getAttribute('data-flag');
+        document.querySelectorAll('[abtest-data-flag]').forEach(function(el) {
+          const flag = el.getAttribute('abtest-data-flag');
           const variant = posthog.getFeatureFlag(flag);
-          const control = el.getAttribute('data-control');
-          const test = el.getAttribute('data-test');
-          
-          if (variant === 'control' && control) {
-            el.innerText = control;
-          } else if (variant === 'test' && test) {
-            el.innerText = test;
+          const controlWrapper = el.querySelector('.abtest-control');
+          const testWrapper = el.querySelector('.abtest-test');
+
+          if (variant === 'control') {
+            console.log('control variant');
+            if (controlWrapper) {
+              controlWrapper.classList.remove('hidden');
+              controlWrapper.classList.add('bg-gray-400');
+            }
+            if (testWrapper) {
+              testWrapper.classList.add('hidden');
+              testWrapper.classList.remove('bg-gray-400');
+            }
+          } else if (variant === 'test') {
+            console.log('test variant');
+            if (controlWrapper) {
+              controlWrapper.classList.add('hidden');
+              controlWrapper.classList.remove('bg-gray-400');
+            }
+            if (testWrapper) {
+              console.log('removed hidden from test');
+              testWrapper.classList.remove('hidden');
+              testWrapper.classList.add('bg-gray-400');
+            }
           }
         });
       });

@@ -1,7 +1,8 @@
 ---
-const { flag, control, test } = Astro.props;
+const { flag } = Astro.props;
 ---
 
-<button class="abtest-button" data-flag={flag} data-control={control} data-test={test}>
-  {control}
+<button class="abtest-button" abtest-data-flag={flag}>
+  <span class="abtest-control"><slot name="control" /></span>
+  <span class="abtest-test hidden"><slot name="test" /></span>
 </button>

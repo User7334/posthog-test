@@ -10,26 +10,9 @@ import ABTest from '../components/ABTest.astro';
 		<h2>AB-Test</h2>
 		<button class="main-button max-w-fit">Click me!</button>
 		<h2>New AB Test</h2>
-		<ABTest flag="button-variants" control="Control variant" test="Test variant" />
-		<ABTest flag="hero-test" control="HERO CONTROL" test="HERO TEST" />
-		<ABTest flag="buttonexperiment" control="Button CONTROL 20% Default" test="Button TEST 80%" />
-	</div>
-	<script>
-		/*
-		const button = document.querySelector('.main-button');
-		button?.addEventListener('click', () => {
-			if (window.posthog) {
-				if (window.posthog.getFeatureFlag('button-variants') === 'control') {
-					window.posthog.capture('home_button_clicked', { variant: 'control' } );
-				}
-				if (window.posthog.getFeatureFlag('button-variants') === 'test') {
-					window.posthog.capture('home_button_clicked', { variant: 'test' } );
-				}
-				button.classList.add('text-green-500');
-			} else {
-				button.classList.add('text-red-500');
-			}
-		});
-		*/
-	</script>   
+		<ABTest flag="buttonexperiment">
+			<div class="text-green-500" slot="control">Button Control</div>
+			<div class="text-red-500" slot="test">Button Test</div>
+		</ABTest>
+	</div>  
 </Layout>
