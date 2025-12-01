@@ -1,8 +1,9 @@
 ---
 const { flag = 'button-variants', control = 'Control variant', test = 'Test variant' } = Astro.props;
+const id = `abtest-${Math.random().toString(36).slice(2,9)}`;
 ---
 
-<button class="abtest-button text-red-500" data-flag={flag} data-control={control} data-test={test}>
+<button class="abtest-button text-red-500" data-abtest-id={id} data-flag={flag} data-control={control} data-test={test}>
   {control}
 </button>
 
@@ -10,34 +11,87 @@ const { flag = 'button-variants', control = 'Control variant', test = 'Test vari
   // This script runs on the client when the component is loaded.
   // It waits for PostHog to be ready (via promise, event, or immediate) and
   // then applies the variant to the button rendered above.
-  const button = document.currentScript.previousElementSibling;
-  if (!button) throw new Error('ABTest: button element not found');
+  function addDebug(msg) {
+    try {
+      const c = document.getElementById('posthog-debug');
+      if (c) {
+        const el = document.createElement('div');
+        el.textContent = new Date().toISOString() + ' — ABTest: ' + msg;
+        el.style.padding = '2px 0';
+        c.appendChild(el);
+        return;
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    console.debug('ABTest:', msg);
+  }
+
+  let button;
+  try {
+    // Preferred: find the button as the previous element sibling of this script
+    if (document.currentScript && document.currentScript.previousElementSibling) {
+      button = document.currentScript.previousElementSibling;
+    }
+  } catch (e) {
+    /* ignore */
+  }
+  if (!button) {
+    // Fallback: find by data-abtest-id attribute
+    try {
+      const el = document.querySelector('[data-abtest-id]');
+      if (el) button = el;
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  if (!button) {
+    console.warn('ABTest: button element not found');
+    addDebug('button element not found');
+  }
 
   function applyVariant(posthogInstance) {
     try {
+      if (!button) return;
       const flagName = button.dataset.flag;
       const val = posthogInstance?.getFeatureFlag ? posthogInstance.getFeatureFlag(flagName) : undefined;
+      addDebug('feature flag value: ' + String(val));
       if (val === 'control') {
         button.innerText = button.dataset.control;
         button.classList.add('text-blue-500');
+        addDebug('applied control variant');
       } else if (val === 'test') {
         button.innerText = button.dataset.test;
         button.classList.add('text-green-500');
+        addDebug('applied test variant');
+      } else {
+        addDebug('no matching variant (value: ' + String(val) + ')');
       }
     } catch (e) {
       console.warn('ABTest: error applying variant', e);
+      addDebug('error applying variant: ' + (e && e.message ? e.message : String(e)));
     }
   }
 
   // If already marked as loaded, run immediately
   if (window.__posthogLoaded && window.posthog) {
+    addDebug('posthog already loaded - applying variant immediately');
     applyVariant(window.posthog);
   } else if (window.posthogReady && typeof window.posthogReady.then === 'function') {
     // Prefer awaiting the shared promise when available
-    window.posthogReady.then((ph) => applyVariant(ph)).catch(() => {});
+    addDebug('waiting for window.posthogReady promise');
+    window.posthogReady.then((ph) => {
+      addDebug('posthogReady resolved in ABTest');
+      applyVariant(ph);
+    }).catch((e) => {
+      addDebug('posthogReady promise rejected: ' + String(e));
+    });
   } else {
     // Fallback to listening to a custom event
+    addDebug('listening for posthog:loaded event');
     window.addEventListener('posthog:loaded', (ev) => {
+      addDebug('posthog:loaded event received in ABTest');
       applyVariant(ev.detail || window.posthog);
     }, { once: true });
   }
