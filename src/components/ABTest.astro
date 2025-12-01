@@ -8,9 +8,8 @@ const id = `abtest-${Math.random().toString(36).slice(2,9)}`;
 </button>
 
 <script type="module" is:inline>
-  // This script runs on the client when the component is loaded.
-  // It waits for PostHog to be ready (via promise, event, or immediate) and
-  // then applies the variant to the button rendered above.
+  // This script runs client-side and applies a feature-flag-driven variant
+  // to the button rendered by this component. It is robust for many instances.
   function addDebug(msg) {
     try {
       const c = document.getElementById('posthog-debug');
@@ -27,11 +26,9 @@ const id = `abtest-${Math.random().toString(36).slice(2,9)}`;
     console.debug('ABTest:', msg);
   }
 
-  // Each instance has a unique id generated server-side and set as attribute
   const abtestId = '{id}';
-  let button;
+  let button = null;
   try {
-    // Find the specific button by its data attribute using the embedded id
     button = document.querySelector(`[data-abtest-id="${abtestId}"]`);
   } catch (e) {
     /* ignore */
@@ -41,9 +38,24 @@ const id = `abtest-${Math.random().toString(36).slice(2,9)}`;
     addDebug('button element not found for id ' + abtestId);
   }
 
-  if (!button) {
-    console.warn('ABTest: button element not found');
-    addDebug('button element not found');
+  // If a stored assignment exists in localStorage, apply it immediately (sticky)
+  try {
+    const flagNamePre = button?.dataset?.flag;
+    if (flagNamePre) {
+      const stored = localStorage.getItem(`abtest-${flagNamePre}`);
+      if (stored) {
+        addDebug(`found stored variant for ${flagNamePre}: ${stored} - applying immediately`);
+        if (stored === 'control') {
+          button.innerText = button.dataset.control;
+          button.classList.add('text-blue-500');
+        } else if (stored === 'test') {
+          button.innerText = button.dataset.test;
+          button.classList.add('text-green-500');
+        }
+      }
+    }
+  } catch (e) {
+    /* ignore storage errors */
   }
 
   function applyVariant(posthogInstance) {
@@ -51,23 +63,17 @@ const id = `abtest-${Math.random().toString(36).slice(2,9)}`;
       if (!button) return;
       const flagName = button.dataset.flag;
       const val = posthogInstance?.getFeatureFlag ? posthogInstance.getFeatureFlag(flagName) : undefined;
-      addDebug('feature flag value: ' + String(val));
+      addDebug('feature flag value for ' + flagName + ': ' + String(val));
       if (val === 'control') {
         button.innerText = button.dataset.control;
         button.classList.add('text-blue-500');
         addDebug('applied control variant');
-        // Optional: persist to localStorage
-        try {
-          localStorage.setItem(`abtest-${flagName}`, 'control');
-        } catch (e) { /* ignore localStorage errors */ }
+        try { localStorage.setItem(`abtest-${flagName}`, 'control'); } catch (e) {}
       } else if (val === 'test') {
         button.innerText = button.dataset.test;
         button.classList.add('text-green-500');
         addDebug('applied test variant');
-        // Optional: persist to localStorage
-        try {
-          localStorage.setItem(`abtest-${flagName}`, 'test');
-        } catch (e) { /* ignore localStorage errors */ }
+        try { localStorage.setItem(`abtest-${flagName}`, 'test'); } catch (e) {}
       } else {
         addDebug('no matching variant (value: ' + String(val) + ')');
       }
@@ -77,24 +83,22 @@ const id = `abtest-${Math.random().toString(36).slice(2,9)}`;
     }
   }
 
-  // If already marked as loaded, run immediately
+  // Run when posthog is ready
   if (window.__posthogLoaded && window.posthog) {
-    addDebug('posthog already loaded - applying variant immediately');
+    addDebug('posthog already loaded - applying variant immediately for ' + abtestId);
     applyVariant(window.posthog);
   } else if (window.posthogReady && typeof window.posthogReady.then === 'function') {
-    // Prefer awaiting the shared promise when available
-    addDebug('waiting for window.posthogReady promise');
+    addDebug('waiting for window.posthogReady promise for ' + abtestId);
     window.posthogReady.then((ph) => {
-      addDebug('posthogReady resolved in ABTest');
+      addDebug('posthogReady resolved in ABTest for ' + abtestId);
       applyVariant(ph);
     }).catch((e) => {
       addDebug('posthogReady promise rejected: ' + String(e));
     });
   } else {
-    // Fallback to listening to a custom event
-    addDebug('listening for posthog:loaded event');
+    addDebug('listening for posthog:loaded event for ' + abtestId);
     window.addEventListener('posthog:loaded', (ev) => {
-      addDebug('posthog:loaded event received in ABTest');
+      addDebug('posthog:loaded event received in ABTest for ' + abtestId);
       applyVariant(ev.detail || window.posthog);
     }, { once: true });
   }
