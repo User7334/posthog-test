@@ -15,7 +15,7 @@ if (!process.env.PUBLIC_POSTHOG_HOST) {
 export default defineConfig({
   // Use server output so the Vercel adapter produces a `.vercel/output` Build Output API
   // (needed when deploying server-rendered or edge functions with the Vercel adapter)
-  output: 'server',
+  output: 'static',
   adapter: vercel(),
   vite: {
     plugins: [tailwindcss()]
