@@ -26,6 +26,8 @@ const attrFlags = JSON.stringify(experiments);
         const button = targetEl.closest(".posthog-button") as HTMLElement | null;
         if (!button) return;
 
+        button.classList.add("bg-red-500");
+
         const raw = button.getAttribute("data-ph-flags");
         const featureFlag = button.getAttribute("data-flag");
 
@@ -33,6 +35,8 @@ const attrFlags = JSON.stringify(experiments);
             console.error("No feature flag specified on PostHogButton.");
             return;
         }
+
+        button.classList.add("bg-yellow-500");
 
         let flags = [];
         try {
@@ -51,6 +55,6 @@ const attrFlags = JSON.stringify(experiments);
             if (window.posthog) window.posthog.capture(featureFlag, { flag });
         });
 
-        button.classList.add("opacity-50");
+        button.classList.add("bg-green-500");
     });
 </script>
