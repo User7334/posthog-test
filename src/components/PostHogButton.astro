@@ -20,6 +20,7 @@ const attrFlags = JSON.stringify(experiments);
 
 <script is:inline>
     document.addEventListener("click", function (event) {
+        console.log("clicked");
         const targetEl = event.target;
         if (!targetEl) return;
 
@@ -27,6 +28,7 @@ const attrFlags = JSON.stringify(experiments);
         if (!button) return;
 
         button.classList.add("bg-red-500");
+        console.log("PostHogButton clicked");
 
         const raw = button.getAttribute("data-ph-flags");
         const featureFlag = button.getAttribute("data-flag");
@@ -54,6 +56,8 @@ const attrFlags = JSON.stringify(experiments);
         flags.forEach((flag) => {
             if (window.posthog) window.posthog.capture(featureFlag, { flag });
         });
+
+        console.log("Captured");
 
         button.classList.add("bg-green-500");
     });
