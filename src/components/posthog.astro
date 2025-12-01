@@ -83,4 +83,57 @@
       }
     })
   }
+
+  // --- central ABTest handler ---
+  // Apply stored variants immediately (so sticky assignments show up before PostHog loads)
+  function applyStoredVariants() {
+    try {
+      document.querySelectorAll('[data-flag]').forEach((el) => {
+        try {
+          const flag = el.getAttribute('data-flag');
+          const stored = localStorage.getItem(`abtest-${flag}`);
+          if (stored) {
+            addDebug(`applyStoredVariants: found ${stored} for ${flag}`);
+            if (stored === 'control') el.innerText = el.getAttribute('data-control') || el.innerText;
+            else if (stored === 'test') el.innerText = el.getAttribute('data-test') || el.innerText;
+          }
+        } catch (e) { /* ignore per-element errors */ }
+      });
+    } catch (e) { console.debug('applyStoredVariants failed', e); }
+  }
+
+  function applyPosthogVariants(ph) {
+    try {
+      if (!ph) ph = window.posthog;
+      if (!ph) return;
+      document.querySelectorAll('[data-flag]').forEach((el) => {
+        try {
+          const flag = el.getAttribute('data-flag');
+          const val = ph.getFeatureFlag ? ph.getFeatureFlag(flag) : undefined;
+          addDebug(`applyPosthogVariants: ${flag} => ${String(val)}`);
+          if (val === 'control') {
+            el.innerText = el.getAttribute('data-control') || el.innerText;
+            try { localStorage.setItem(`abtest-${flag}`, 'control'); } catch (e) {}
+          } else if (val === 'test') {
+            el.innerText = el.getAttribute('data-test') || el.innerText;
+            try { localStorage.setItem(`abtest-${flag}`, 'test'); } catch (e) {}
+          }
+        } catch (e) { /* ignore per-element errors */ }
+      });
+    } catch (e) { console.debug('applyPosthogVariants failed', e); }
+  }
+
+  // Run stored variants as soon as DOM is ready
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    applyStoredVariants();
+  } else {
+    document.addEventListener('DOMContentLoaded', applyStoredVariants, { once: true });
+  }
+
+  // When PostHog is ready (promise or event), apply server-side variants
+  if (window.posthogReady && typeof window.posthogReady.then === 'function') {
+    window.posthogReady.then((ph) => applyPosthogVariants(ph)).catch(() => {});
+  } else {
+    window.addEventListener('posthog:loaded', (ev) => applyPosthogVariants(ev.detail || window.posthog), { once: true });
+  }
 </script>
