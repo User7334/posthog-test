@@ -33,7 +33,7 @@ const {
 </div>
 
 <script type="module">
-  import { getPostHogReady } from "/src/lib/posthog/ready.ts";
+  import { getPostHogReady } from "/src/scripts/ready.ts";
 
   const root = document.currentScript.closest("[data-abtest]");
   if (!root) return;
