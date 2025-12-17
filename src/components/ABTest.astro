@@ -1,8 +1,89 @@
 ---
-const { flag } = Astro.props;
+type Props = {
+  experimentKey: string;
+  instanceId?: string;
+  threshold?: number;
+};
+
+const {
+  experimentKey,
+  instanceId = "default",
+  threshold = 0.25,
+} = Astro.props;
 ---
 
-<div class="abtest-wrapper" id={flag} data-abtest-flag={flag} data-variant="control">
-  <div class="abtest-control"><slot name="control" /></div>
-  <div class="abtest-test hidden"><slot name="test" /></div>
+<div
+  data-abtest
+  data-key={experimentKey}
+  data-id={instanceId}
+  data-threshold={threshold}
+>
+  <!-- Default / Fallback -->
+  <div data-variant="control">
+    <slot name="control" />
+  </div>
+
+  <div data-variant="variantA" class="hidden">
+    <slot name="variantA" />
+  </div>
+
+  <div data-variant="variantB" class="hidden">
+    <slot name="variantB" />
+  </div>
 </div>
+
+<script type="module">
+  import { getPostHogReady } from "/src/lib/posthog/ready.ts";
+
+  const root = document.currentScript.closest("[data-abtest]");
+  if (!root) return;
+
+  const key = root.dataset.key;
+  const id = root.dataset.id;
+  const threshold = Number(root.dataset.threshold || "0.25");
+  const exposureKey = `ph:exp:${key}:${id}`;
+
+  function showVariant(name) {
+    root.querySelectorAll("[data-variant]").forEach(el => {
+      el.classList.toggle("hidden", el.dataset.variant !== name);
+    });
+  }
+
+  function alreadyExposed() {
+    try { return localStorage.getItem(exposureKey) === "1"; } catch { return false; }
+  }
+
+  function markExposed() {
+    try { localStorage.setItem(exposureKey, "1"); } catch {}
+  }
+
+  const posthog = await getPostHogReady();
+  if (!posthog || !key) return;
+
+  // 🔒 silent variant read (KEIN Exposure)
+  const raw = posthog.getFeatureFlag(key, { send_event: false });
+  const variant = raw === false || raw == null ? "control" : String(raw);
+
+  if (variant !== "control") showVariant(variant);
+
+  if (alreadyExposed()) return;
+
+  const io = new IntersectionObserver(entries => {
+    if (!entries[0].isIntersecting) return;
+    io.disconnect();
+    if (alreadyExposed()) return;
+
+    markExposed();
+
+    posthog.capture("$feature_flag_called", {
+      feature_flag: key,
+      feature_flag_response: variant,
+      source: "abtest",
+      reason: "viewport",
+      page: location.pathname,
+      instance_id: id,
+    });
+  }, { threshold });
+
+  io.observe(root);
+</script>
